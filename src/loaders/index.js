@@ -64,7 +64,12 @@ function modelLoader(model, targetIdAttribute, relationType, queryBuilder) {
                             byTargetId[key] :
                             [];
                         byTargetId[key].push(item);
-                    } else byTargetId[item.attributes[targetIdAttribute]] = item;
+                    } else {
+                      if (!byTargetId[item.attributes[targetIdAttribute]]) {
+                        byTargetId[item.attributes[targetIdAttribute]] = item;
+                      }
+                    }
+
                 });
                 return keys.map((key) => {
                     if (byTargetId.hasOwnProperty(key)) {
