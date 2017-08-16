@@ -113,7 +113,7 @@ function belongsToManyLoader(model, joinTableName, foreignKey, otherKey, targetI
         loader = new DataLoader((keys) => {
             return model.query((db) => {
                 Object.assign(db, queryBuilder || {});
-                db.select([`${model.prototype.tableName}.*`, `${joinTableName}.*`])
+                db.select([`${joinTableName}.*`, `${model.prototype.tableName}.*`])
                     .innerJoin(
                         joinTableName, `${model.prototype.tableName}.${targetIdAttribute}`,
                         '=',
