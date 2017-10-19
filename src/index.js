@@ -1,7 +1,7 @@
 'use strict';
 
 const loaders = require('./loaders');
-const humps = require('humps')
+const humps = require('humps');
 
 /**
  * Quick workaround allowing GraphQL to access model attributes directly
@@ -41,7 +41,7 @@ module.exports = {
      */
     resolverFactory(Model) {
         return function resolver(modelInstance, args, context, info, extra) {
-            const fieldName = humps.decamelize(info.fieldName)
+            const fieldName = humps.decamelize(info.fieldName);
             const isAssociation = (typeof Model.prototype[fieldName] === 'function');
             const model = isAssociation ? modelInstance.related(fieldName) : new Model();
             for (const key in args) {

@@ -52,9 +52,10 @@ function modelLoader(model, targetIdAttribute, relationType, queryBuilder) {
     if (!loader) {
         const collection = (relationType === 'hasMany');
         loader = new DataLoader((keys) => {
+            const filteredKeys = keys.filter(function(key) { return !!key });
             return model.query((db) => {
                 Object.assign(db, queryBuilder || {});
-                db.where(targetIdAttribute, 'in', keys);
+                db.where(targetIdAttribute, 'in', filteredKeys);
             }).fetchAll().then((items) => {
                 const byTargetId = {};
                 items.forEach((item) => {
@@ -157,7 +158,7 @@ function belongsTo(target) {
             const targetIdAttribute = this.relatedData.key('targetIdAttribute');
             const parentFK = this.relatedData.key('parentFk');
             const knex = this._knex;
-            return modelLoader(model, targetIdAttribute, 'belongsTo', knex).load(parentFK);
+            return modelLoader(model, targetIdAttribute, 'belongsTo', knex).load(parentFK || '');
         };
     });
 }
