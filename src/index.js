@@ -43,15 +43,19 @@ module.exports = {
         return function resolver(modelInstance, args, context, info, extra) {
             const fieldName = humps.decamelize(info.fieldName);
             const isAssociation = (typeof Model.prototype[fieldName] === 'function');
-            const model = isAssociation ? modelInstance.related(fieldName) : new Model();
+            let model = isAssociation ? modelInstance.related(fieldName) : new Model();
             for (const key in args) {
                 model.where(`${model.tableName}.${key}`, args[key]);
             }
             if (extra) {
+              if (typeof extra === 'function') {
+                model = extra(model)
+              } else {
                 for (const key in extra) {
-                    model[key](...extra[key]);
-                    delete extra.key;
+                  model[key](...extra[key]);
+                  delete extra.key;
                 }
+              }
             }
             if (isAssociation) {
                 context && context.loaders && context.loaders(model);
