@@ -49,7 +49,7 @@ module.exports = {
             }
             if (extra) {
               if (typeof extra === 'function') {
-                model = extra(model)
+                extra(model)
               } else {
                 for (const key in extra) {
                   model[key](...extra[key]);
