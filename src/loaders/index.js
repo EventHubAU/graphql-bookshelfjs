@@ -55,7 +55,7 @@ function modelLoader(model, targetIdAttribute, relationType, queryBuilder) {
             const filteredKeys = keys.filter(function(key) { return !!key });
             return model.query((db) => {
                 Object.assign(db, queryBuilder || {});
-                db.where(targetIdAttribute, 'in', filteredKeys);
+                db.where(`${model.prototype.tableName}.${targetIdAttribute}`, 'in', filteredKeys);
             }).fetchAll().then((items) => {
                 const byTargetId = {};
                 items.forEach((item) => {
@@ -66,9 +66,9 @@ function modelLoader(model, targetIdAttribute, relationType, queryBuilder) {
                             [];
                         byTargetId[key].push(item);
                     } else {
-                      if (!byTargetId[item.attributes[targetIdAttribute]]) {
-                        byTargetId[item.attributes[targetIdAttribute]] = item;
-                      }
+                        if (!byTargetId[item.attributes[targetIdAttribute]]) {
+                            byTargetId[item.attributes[targetIdAttribute]] = item;
+                        }
                     }
 
                 });
