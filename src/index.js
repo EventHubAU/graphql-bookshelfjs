@@ -94,7 +94,7 @@ module.exports = {
                         forwardConnectionArgsToLimitAndOffset(firstAfter)
                     )
                     .then(
-                        paginationResultsToForwardConnecitonFields(firstAfter)
+                        paginationResultsToForwardConnectionFields(firstAfter)
                     )
                     .then((c) => { return exposeAttributes(c); });
             }
@@ -106,7 +106,7 @@ module.exports = {
 };
 
 
-const paginationResultsToForwardConnecitonFields = args => results => {
+const paginationResultsToForwardConnectionFields = args => results => {
     const connection = connectionFromArraySlice(
         results.models,
         args,
