@@ -114,7 +114,7 @@ function belongsToManyLoader(model, joinTableName, foreignKey, otherKey, targetI
         loader = new DataLoader((keys) => {
             return model.query((db) => {
                 Object.assign(db, queryBuilder || {});
-                db.select([`${joinTableName}.*`, `${model.prototype.tableName}.*`])
+                db.select([`${model.prototype.tableName}.*`, `${model.prototype.tableName}.id as _id`, `${joinTableName}.*`])
                     .innerJoin(
                         joinTableName, `${model.prototype.tableName}.${targetIdAttribute}`,
                         '=',
@@ -129,7 +129,8 @@ function belongsToManyLoader(model, joinTableName, foreignKey, otherKey, targetI
                     byForeignKey[key] = byForeignKey[key] ?
                         byForeignKey[key] :
                         [];
-                    byForeignKey[key].push(item);
+                  item.attributes[`id`] = item.attributes['_id'];
+                  byForeignKey[key].push(item);
                 });
                 return keys.map((key) => {
                     if (byForeignKey.hasOwnProperty(key)) {
