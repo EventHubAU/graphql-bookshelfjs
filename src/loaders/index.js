@@ -149,6 +149,59 @@ function belongsToManyLoader(model, joinTableName, foreignKey, otherKey, targetI
 
 /**
  *
+ * @param {object} model
+ * @param {string} joinTableName
+ * @param {string} foreignKey
+ * @param {string} otherKey
+ * @param {string} targetIdAttribute
+ * @param {?object} queryBuilder
+ * @returns {DataLoader}
+ */
+function belongsToManyCustomLoader(model, joinTableName, foreignKey, otherKey, targetIdAttribute, queryBuilder) {
+  const loaderKey = [
+    model.prototype.tableName,
+    joinTableName,
+    foreignKey,
+    otherKey,
+    targetIdAttribute,
+    queryBuilder ? queryBuilder.toString() : '0',
+  ].join('|');
+  let loader = getLoader(loaderKey);
+  if (!loader) {
+    loader = new DataLoader((keys) => {
+      return model.query((db) => {
+        Object.assign(db, queryBuilder || {});
+        db.select([`${model.prototype.tableName}.*`, `${model.prototype.tableName}.id as _id`, `${joinTableName}.*`])
+        .where(`${joinTableName}.${foreignKey}`, 'in', keys);
+      })
+      .fetchAll()
+      .then((items) => {
+        const byForeignKey = {};
+        items.forEach((item) => {
+          const key = item.attributes[foreignKey];
+          byForeignKey[key] = byForeignKey[key] ?
+            byForeignKey[key] :
+            [];
+          item.attributes[`id`] = item.attributes['_id'];
+          byForeignKey[key].push(item);
+        });
+        return keys.map((key) => {
+          if (byForeignKey.hasOwnProperty(key)) {
+            return byForeignKey[key];
+          }
+          return [];
+        });
+      });
+    }, {
+      cache: false,
+    });
+    setLoader(loaderKey, loader);
+  }
+  return loader;
+}
+
+/**
+ *
  * @param {object} target
  */
 function belongsTo(target) {
@@ -224,6 +277,28 @@ function belongsToMany(target) {
  *
  * @param {object} target
  */
+function belongsToManyCustom(target) {
+    if (target.fetch.__wrapped) return;
+    shimmer.wrap(target, 'fetch', (original) => {
+        return function fetch() {
+            const model = this.relatedData.target;
+            const joinTableName = this.relatedData.key('joinTableName') ||
+                [this.tableName(), this.relatedData.key('parentTableName')].sort().join('_');
+            const foreignKey = this.relatedData.key('foreignKey');
+            const otherKey = this.relatedData.key('otherKey');
+            const targetIdAttribute = this.relatedData.key('targetIdAttribute');
+            const parentFK = this.relatedData.key('parentFk');
+            const knex = this._knex;
+            return belongsToManyCustomLoader(model, joinTableName, foreignKey, otherKey, targetIdAttribute, knex)
+                .load(parentFK);
+        };
+    });
+}
+
+/**
+ *
+ * @param {object} target
+ */
 module.exports = function loaders(target) {
     context = this;
     context.__bookshelfResolver = context.__bookshelfResolver || {};
@@ -232,6 +307,10 @@ module.exports = function loaders(target) {
         switch (target.relatedData.type) {
         case 'belongsTo':
             belongsTo(target);
+            break;
+
+        case 'belongsToManyCustom':
+            belongsToManyCustom(target);
             break;
 
         case 'belongsToMany':
