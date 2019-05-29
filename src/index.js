@@ -60,6 +60,7 @@ module.exports = {
             delete args.first
             delete args.after
             const fieldName = humps.decamelize(info.fieldName);
+            const isConnection = first !== undefined || after !== undefined || fieldName.includes('_connection');
             const isAssociation = (typeof Model.prototype[fieldName] === 'function');
             let model = isAssociation ? modelInstance.related(fieldName) : new Model();
             for (const key in args) {
@@ -83,10 +84,12 @@ module.exports = {
             }
             if (isAssociation) {
                 context && context.loaders && context.loaders(model);
-                return model.fetch().then((c) => { return exposeAttributes(c); });
+                if (!isConnection) {
+                  return model.fetch().then((c) => { return exposeAttributes(c); });
+                }
             }
 
-            if (first !== undefined || after !== undefined || fieldName.includes('_connection')) {
+            if (isConnection) {
                 const firstAfter = {first, after}
 
                 return model
